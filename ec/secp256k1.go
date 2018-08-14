@@ -1,4 +1,4 @@
-package elliptic
+package ec
 
 import (
 	"crypto/elliptic"
@@ -8,22 +8,23 @@ import (
 // Koblitz curve math
 // http://www.secg.org/sec2-v2.pdf 2.4.1
 // https://github.com/mndrix/btcutil/blob/master/secp256k1.go
-// https://github.com/btcsuite/btcutil/blob/master/hdkeychain/extendedkey.go
 // https://github.com/btcsuite/btcd/blob/master/btcec/btcec.go
 
 // KoblitzCurve A Koblitz Curve with a=0.
 type KoblitzCurve struct {
 	*elliptic.CurveParams
+	q *big.Int
 }
 
 var secp256k1 *KoblitzCurve
 
 // Secp265k1 return Curve
-func Secp265k1() elliptic.Curve {
+func Secp265k1() *KoblitzCurve {
 	return secp256k1
 }
 
 func init() {
+	secp256k1 = new(KoblitzCurve)
 	secp256k1.CurveParams = new(elliptic.CurveParams)
 	secp256k1.Name = "secp256k1"
 	secp256k1.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
@@ -32,6 +33,9 @@ func init() {
 	secp256k1.Gx, _ = new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16)
 	secp256k1.Gy, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
 	secp256k1.BitSize = 256
+
+	secp256k1.q = new(big.Int).Div(new(big.Int).Add(secp256k1.P,
+		big.NewInt(1)), big.NewInt(4))
 }
 
 // Params returns the parameters for the curve
@@ -219,4 +223,10 @@ func (curve *KoblitzCurve) ScalarMult(x1 *big.Int, y1 *big.Int, k []byte) (*big.
 // and k is an integer in big-endian form.
 func (curve *KoblitzCurve) ScalarBaseMult(k []byte) (x *big.Int, y *big.Int) {
 	return curve.ScalarMult(curve.Gx, curve.Gy, k)
+}
+
+// QPlus1Div4 returns the Q+1/4 constant for the curve for use in calculating
+// square roots via exponention.
+func (curve *KoblitzCurve) QPlus1Div4() *big.Int {
+	return curve.q
 }
