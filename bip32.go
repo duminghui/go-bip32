@@ -8,8 +8,9 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/duminghui/go-bip32/address"
 	"github.com/duminghui/go-bip32/ec"
-	"github.com/duminghui/go-bip32/utils/basen"
+	"github.com/duminghui/go-bip32/utils/base58"
 	"github.com/duminghui/go-bip32/utils/bytes"
 	"github.com/duminghui/go-bip32/utils/hash"
 )
@@ -104,26 +105,6 @@ func NewMasterKey(seed []byte) (*ExtendedKey, error) {
 	}, nil
 }
 
-// Neuter https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#private-parent-key--public-child-key
-func (key *ExtendedKey) Neuter() *ExtendedKey {
-	// N((k, c)) → (K, c)
-	// N(CKDpriv((kpar, cpar), i)) (works always).
-	// CKDpub(N(kpar, cpar), i) (works only for non-hardened child keys).
-	if !key.isPrivate {
-		return key
-	}
-	return &ExtendedKey{
-		version:   keyVerMainNetPub,
-		depth:     key.depth,
-		parentFP:  key.parentFP,
-		childNum:  key.childNum,
-		chainCode: key.chainCode,
-		key:       key.pubKeyBytes(),
-		pubKey:    nil,
-		isPrivate: false,
-	}
-}
-
 // pubKeyBytes returns bytes for the serialized compressed public key associated
 // with this extended key in an efficient manner including memoization as
 // necessary.
@@ -141,29 +122,10 @@ func (key *ExtendedKey) pubKeyBytes() []byte {
 	// This is a private extended key, so calculate and memoize the public
 	// key if needed.
 	if len(key.pubKey) == 0 {
-		pkx, pky := ec.Secp265k1().ScalarBaseMult(key.key)
-		pubKey := ec.PublicKey{X: pkx, Y: pky}
+		_, pubKey := ec.PrivKeyFromBytes(key.key)
 		key.pubKey = pubKey.SerializeCompressed()
 	}
 	return key.pubKey
-}
-
-func (key *ExtendedKey) PublicKey() *ExtendedKey {
-	keyBytes := key.key
-	if key.isPrivate {
-		key.pubKeyBytes()
-		keyBytes = key.pubKey
-	}
-	return &ExtendedKey{
-		version:   keyVerMainNetPub,
-		depth:     key.depth,
-		parentFP:  key.parentFP,
-		childNum:  key.childNum,
-		chainCode: key.chainCode,
-		key:       keyBytes,
-		pubKey:    nil,
-		isPrivate: false,
-	}
 }
 
 // Child create extended child key
@@ -235,12 +197,12 @@ func (key *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 			return nil, ErrInvalidChild
 		}
 
-		pubKey, err := ec.ParsePubKey(key.key)
+		parentPubKey, err := ec.ParsePubKey(key.key)
 		if err != nil {
 			return nil, err
 		}
 
-		childX, childY := ec.Secp265k1().Add(ilx, ily, pubKey.X, pubKey.Y)
+		childX, childY := ec.Secp265k1().Add(ilx, ily, parentPubKey.X, parentPubKey.Y)
 		pk := ec.PublicKey{X: childX, Y: childY}
 		childKey = pk.SerializeCompressed()
 	}
@@ -255,6 +217,32 @@ func (key *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 		pubKey:    nil,
 		isPrivate: isPrivate,
 	}, nil
+}
+
+// Neuter https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#private-parent-key--public-child-key
+func (key *ExtendedKey) Neuter() *ExtendedKey {
+	// N((k, c)) → (K, c)
+	// N(CKDpriv((kpar, cpar), i)) (works always).
+	// CKDpub(N(kpar, cpar), i) (works only for non-hardened child keys).
+	if !key.isPrivate {
+		return key
+	}
+	return &ExtendedKey{
+		version:   keyVerMainNetPub,
+		depth:     key.depth,
+		parentFP:  key.parentFP,
+		childNum:  key.childNum,
+		chainCode: key.chainCode,
+		key:       key.pubKeyBytes(),
+		pubKey:    nil,
+		isPrivate: false,
+	}
+}
+
+// AddressPubKeyHash return pay-to-pubkey-has (P2PKH)
+func (key *ExtendedKey) Address() (*address.AddressPubKeyHash, error) {
+	pkHash := hash.Hash160(key.pubKeyBytes())
+	return address.NewAddressPubKeyHash(pkHash, 0x00)
 }
 
 func (key *ExtendedKey) Serialize() ([]byte, error) {
@@ -290,5 +278,5 @@ func (key *ExtendedKey) B58Serialize() string {
 	if err != nil {
 		return ""
 	}
-	return basen.Base58Encode(serializeKey)
+	return base58.Encode(serializeKey)
 }

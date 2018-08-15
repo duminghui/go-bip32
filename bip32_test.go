@@ -35,7 +35,7 @@ func TestNewMasterKey(t *testing.T) {
 	fmt.Println("MK b58:", b58)
 	b58Vaild := "xprv9s21ZrQH143K3dRqV7LTj7uFvjMFiai3HV7Ytoj7Jg3mEArCCk2ujozgMSoip9FTWH4YwjTnjayPooxVesrtHst8qo8xZCnG1MazdLfBJBR"
 	fmt.Println(b58 == b58Vaild)
-	masterPubKey := masterKey.PublicKey()
+	masterPubKey := masterKey.Neuter()
 	b58pubKey := masterPubKey.B58Serialize()
 	fmt.Println("masterPubKey:", b58pubKey)
 	b58pubValid := "xpub661MyMwAqRbcG7WJb8sU6FqzUmBk83Rtei39hC8is1ak6yBLkHMAHcKACgmyxr6KLGhLSM4Qr74R8meHNcttv4bmPMDC8EwB9vJ3HRGaC53"

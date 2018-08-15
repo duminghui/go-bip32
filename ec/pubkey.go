@@ -19,10 +19,6 @@ const (
 	pubKeyHybrid       byte = 0x6
 )
 
-var (
-	curve = Secp265k1()
-)
-
 // PublicKey struct
 type PublicKey struct {
 	X, Y *big.Int
@@ -41,22 +37,22 @@ func decompressPoint(x *big.Int, ybit bool) (*big.Int, error) {
 	// Y = +-sqrt(x^3 + B)
 	x3 := new(big.Int).Mul(x, x)
 	x3.Mul(x3, x)
-	x3.Add(x3, curve.Params().B)
-	x3.Mod(x3, curve.Params().P)
+	x3.Add(x3, secp256k1.Params().B)
+	x3.Mod(x3, secp256k1.Params().P)
 
 	// Now calculate sqrt mod p of x^3 + B
 	// This code used to do a full sqrt based on tonelli/shanks,
 	// but this was replaced by the algorithms referenced in
 	// https://bitcointalk.org/index.php?topic=162805.msg1712294#msg1712294
-	y := new(big.Int).Exp(x3, curve.QPlus1Div4(), curve.Params().P)
+	y := new(big.Int).Exp(x3, secp256k1.QPlus1Div4(), secp256k1.Params().P)
 
 	if ybit != isOdd(y) {
-		y.Sub(curve.Params().P, y)
+		y.Sub(secp256k1.Params().P, y)
 	}
 
 	// Check that y is a square root of x^3 + B.
 	y2 := new(big.Int).Mul(y, y)
-	y2.Mod(y2, curve.Params().P)
+	y2.Mod(y2, secp256k1.Params().P)
 	if y2.Cmp(x3) != 0 {
 		return nil, fmt.Errorf("invalid square root")
 	}
@@ -114,13 +110,13 @@ func ParsePubKey(pubKeyStr []byte) (key *PublicKey, err error) {
 			len(pubKeyStr))
 	}
 
-	if pubkey.X.Cmp(curve.Params().P) >= 0 {
+	if pubkey.X.Cmp(secp256k1.Params().P) >= 0 {
 		return nil, fmt.Errorf("pubkey X parameter is >= to P")
 	}
-	if pubkey.Y.Cmp(curve.Params().P) >= 0 {
+	if pubkey.Y.Cmp(secp256k1.Params().P) >= 0 {
 		return nil, fmt.Errorf("pubkey Y parameter is >= to P")
 	}
-	if !curve.IsOnCurve(pubkey.X, pubkey.Y) {
+	if !secp256k1.IsOnCurve(pubkey.X, pubkey.Y) {
 		return nil, fmt.Errorf("pubkey isn't on secp256k1 curve")
 	}
 	return &pubkey, nil
