@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/duminghui/go-bip32/address"
@@ -53,6 +54,9 @@ var (
 
 	//ErrInvalidChild  child index invalid
 	ErrInvalidChild = errors.New("the extended key at this index is invalid")
+
+	// ErrNotPrivExtKey  not Private Key
+	ErrNotPrivExtKey = errors.New("cant't create private keys from public extended key")
 )
 
 var (
@@ -63,14 +67,15 @@ var (
 
 // ExtendedKey private/public key data
 type ExtendedKey struct {
-	version   []byte // 4 bytes
-	depth     byte   // 1 byte
-	parentFP  []byte // 4 bytes
-	childNum  uint32 // 4 bytes
-	chainCode []byte // 32 bytes
-	key       []byte // will be the pubkey for extended pub keys
-	pubKey    []byte // only for extended pri keys
-	isPrivate bool
+	version        []byte // 4 bytes
+	depth          byte   // 1 byte
+	parentFP       []byte // 4 bytes
+	childNum       uint32 // 4 bytes
+	chainCode      []byte // 32 bytes
+	key            []byte // will be the pubkey for extended pub keys
+	pubKey         []byte // only for extended pri keys
+	isPrivate      bool
+	DerivationPath string
 }
 
 //NewMasterKey create a new master key data from seed
@@ -95,13 +100,14 @@ func NewMasterKey(seed []byte) (*ExtendedKey, error) {
 	}
 
 	return &ExtendedKey{
-		version:   keyVerMainNetPri,
-		depth:     0,
-		parentFP:  []byte{0x00, 0x00, 0x00, 0x00},
-		childNum:  0,
-		chainCode: chainCode,
-		key:       secretKey,
-		isPrivate: true,
+		version:        keyVerMainNetPri,
+		depth:          0,
+		parentFP:       []byte{0x00, 0x00, 0x00, 0x00},
+		childNum:       0,
+		chainCode:      chainCode,
+		key:            secretKey,
+		isPrivate:      true,
+		DerivationPath: "m",
 	}, nil
 }
 
@@ -126,6 +132,12 @@ func (key *ExtendedKey) pubKeyBytes() []byte {
 		key.pubKey = pubKey.SerializeCompressed()
 	}
 	return key.pubKey
+}
+
+// HardenedChild derivation hardened child
+func (key *ExtendedKey) HardenedChild(i uint32) (*ExtendedKey, error) {
+	i += HardenedKeyStart
+	return key.Child(i)
 }
 
 // Child create extended child key
@@ -156,13 +168,16 @@ func (key *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 	// #3 normal: serP(parentPubKey) || ser32(i)
 	//   P=(x,y)  serP(P) = (0x02 or 0x03) || ser256(x) = Compressed PubKey
 	// 33 +4 = 37
+	keyIdentifier := ""
 	data := make([]byte, 37)
 	if isHardenedChild {
 		// #1
 		copy(data[1:], key.key)
+		keyIdentifier = fmt.Sprintf("%s/%d'", key.DerivationPath, i%HardenedKeyStart)
 	} else {
 		// #2 #3
 		copy(data, key.pubKeyBytes())
+		keyIdentifier = fmt.Sprintf("%s/%d", key.DerivationPath, i)
 	}
 	binary.BigEndian.PutUint32(data[33:], i)
 
@@ -187,7 +202,8 @@ func (key *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 		keyNum := new(big.Int).SetBytes(key.key)
 		ilNum.Add(ilNum, keyNum)
 		ilNum.Mod(ilNum, ec.Secp265k1().Params().N)
-		childKey = ilNum.Bytes()
+		// childKey = ilNum.Bytes()
+		childKey = bytes.PaddedBytes(32, ilNum.Bytes())
 		isPrivate = true
 	} else {
 		// #3
@@ -208,14 +224,15 @@ func (key *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 	}
 	parentFP := hash.Hash160(key.pubKeyBytes())[:4]
 	return &ExtendedKey{
-		version:   key.version,
-		depth:     key.depth + 1,
-		parentFP:  parentFP,
-		childNum:  i,
-		chainCode: childChainCode,
-		key:       childKey,
-		pubKey:    nil,
-		isPrivate: isPrivate,
+		version:        key.version,
+		depth:          key.depth + 1,
+		parentFP:       parentFP,
+		childNum:       i,
+		chainCode:      childChainCode,
+		key:            childKey,
+		pubKey:         nil,
+		isPrivate:      isPrivate,
+		DerivationPath: keyIdentifier,
 	}, nil
 }
 
@@ -228,21 +245,31 @@ func (key *ExtendedKey) Neuter() *ExtendedKey {
 		return key
 	}
 	return &ExtendedKey{
-		version:   keyVerMainNetPub,
-		depth:     key.depth,
-		parentFP:  key.parentFP,
-		childNum:  key.childNum,
-		chainCode: key.chainCode,
-		key:       key.pubKeyBytes(),
-		pubKey:    nil,
-		isPrivate: false,
+		version:        keyVerMainNetPub,
+		depth:          key.depth,
+		parentFP:       key.parentFP,
+		childNum:       key.childNum,
+		chainCode:      key.chainCode,
+		key:            key.pubKeyBytes(),
+		pubKey:         nil,
+		isPrivate:      false,
+		DerivationPath: key.DerivationPath,
 	}
 }
 
-// AddressPubKeyHash return pay-to-pubkey-has (P2PKH)
+// Address return pay-to-pubkey-has (P2PKH) address
 func (key *ExtendedKey) Address() (*address.AddressPubKeyHash, error) {
 	pkHash := hash.Hash160(key.pubKeyBytes())
 	return address.NewAddressPubKeyHash(pkHash, 0x00)
+}
+
+func (key *ExtendedKey) ECPrivKey() (*ec.PrivateKey, error) {
+	if !key.isPrivate {
+		return nil, ErrNotPrivExtKey
+	}
+
+	privKey, _ := ec.PrivKeyFromBytes(key.key)
+	return privKey, nil
 }
 
 func (key *ExtendedKey) Serialize() ([]byte, error) {
@@ -264,7 +291,7 @@ func (key *ExtendedKey) Serialize() ([]byte, error) {
 	serializedBytes = append(serializedBytes, key.chainCode...)
 	if key.isPrivate {
 		serializedBytes = append(serializedBytes, 0x00)
-		serializedBytes = bytes.PaddedAppend(32, serializedBytes, key.key)
+		serializedBytes = bytes.PaddedAppend(serializedBytes, 32, key.key)
 	} else {
 		serializedBytes = append(serializedBytes, key.pubKeyBytes()...)
 	}

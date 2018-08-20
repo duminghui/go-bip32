@@ -130,5 +130,5 @@ func (key *PublicKey) SerializeCompressed() []byte {
 		format |= 0x1
 	}
 	b = append(b, format)
-	return bytes.PaddedAppend(32, b, key.X.Bytes())
+	return bytes.PaddedAppend(b, 32, key.X.Bytes())
 }

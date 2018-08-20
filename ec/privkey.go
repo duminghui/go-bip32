@@ -4,6 +4,8 @@ package ec
 import "github.com/duminghui/go-bip32/utils/bytes"
 import "math/big"
 
+const PrivKeyBytesLen = 32
+
 type PrivateKey struct {
 	PublicKey
 	D *big.Int

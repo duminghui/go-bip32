@@ -40,3 +40,8 @@ func encodeAddress(hash160 []byte, version byte) string {
 	copy(input[1:], hash160)
 	return base58.CheckEncode(input)
 }
+
+// Hash160 return hash160
+func (a *AddressPubKeyHash) Hash160() []byte {
+	return a.hash[:]
+}
