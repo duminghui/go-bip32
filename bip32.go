@@ -60,13 +60,12 @@ var (
 )
 
 var (
-	masterKey        = []byte("Bitcoin seed")
-	keyVerMainNetPri = []byte{0x04, 0x88, 0xad, 0xe4} // starts with xprv
-	keyVerMainNetPub = []byte{0x04, 0x88, 0xb2, 0x1e} // starts with xpub
+	masterKey = []byte("Bitcoin seed")
 )
 
 // ExtendedKey private/public key data
 type ExtendedKey struct {
+	coinParams     *Params
 	version        []byte // 4 bytes
 	depth          byte   // 1 byte
 	parentFP       []byte // 4 bytes
@@ -79,7 +78,7 @@ type ExtendedKey struct {
 }
 
 //NewMasterKey create a new master key data from seed
-func NewMasterKey(seed []byte) (*ExtendedKey, error) {
+func NewMasterKey(seed []byte, params *Params) (*ExtendedKey, error) {
 	if len(seed) < minSeedBytes || len(seed) > maxSeedBytes {
 		return nil, ErrInvalidSeedLen
 	}
@@ -100,7 +99,8 @@ func NewMasterKey(seed []byte) (*ExtendedKey, error) {
 	}
 
 	return &ExtendedKey{
-		version:        keyVerMainNetPri,
+		coinParams:     params,
+		version:        params.HDPrivateKeyID[:],
 		depth:          0,
 		parentFP:       []byte{0x00, 0x00, 0x00, 0x00},
 		childNum:       0,
@@ -224,6 +224,7 @@ func (key *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 	}
 	parentFP := hash.Hash160(key.pubKeyBytes())[:4]
 	return &ExtendedKey{
+		coinParams:     key.coinParams,
 		version:        key.version,
 		depth:          key.depth + 1,
 		parentFP:       parentFP,
@@ -245,7 +246,8 @@ func (key *ExtendedKey) Neuter() *ExtendedKey {
 		return key
 	}
 	return &ExtendedKey{
-		version:        keyVerMainNetPub,
+		coinParams:     key.coinParams,
+		version:        key.coinParams.HDPublicKeyID[:],
 		depth:          key.depth,
 		parentFP:       key.parentFP,
 		childNum:       key.childNum,
@@ -260,7 +262,7 @@ func (key *ExtendedKey) Neuter() *ExtendedKey {
 // Address return pay-to-pubkey-has (P2PKH) address
 func (key *ExtendedKey) Address() (*address.AddressPubKeyHash, error) {
 	pkHash := hash.Hash160(key.pubKeyBytes())
-	return address.NewAddressPubKeyHash(pkHash, 0x00)
+	return address.NewAddressPubKeyHash(pkHash, key.coinParams.PubKeyHashAddrID)
 }
 
 func (key *ExtendedKey) ECPrivKey() (*ec.PrivateKey, error) {

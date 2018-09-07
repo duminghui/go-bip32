@@ -25,7 +25,7 @@ func TestNewMasterKey(t *testing.T) {
 	// seed = seedNum.Bytes()
 	// seed = bytes.PaddedBytes(16, seed)
 	// fmt.Printf("seed2: %x\n", seed)
-	masterKey, err := NewMasterKey(seed)
+	masterKey, err := NewMasterKey(seed, &BTCMainNetParams)
 	fmt.Println(err, len(seed))
 	// fmt.Printf("MK version:%x\n", masterKey.version)
 	// fmt.Printf("MK childNum:%x\n", masterKey.childNum)
@@ -63,7 +63,7 @@ type chain struct {
 func testVectorMethod(testVector *testVector) {
 	seed, _ := bytes.BytesFromHexStrFixZeroPrefix(testVector.seed)
 	fmt.Printf("seed: %x\n", seed)
-	masterKey, err := NewMasterKey(seed)
+	masterKey, err := NewMasterKey(seed, &BTCMainNetParams)
 	if err != nil {
 		panic(err)
 	}
@@ -184,11 +184,13 @@ func TestVector3(t *testing.T) {
 	testVectorMethod(testVector3)
 }
 
+// https://github.com/iancoleman/bip39/issues/58
+// 17rxURoF96VhmkcEGCj5LNQkmN9HVhWb7F
 func TestVector3_2(t *testing.T) {
 	t.SkipNow()
 	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
 	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
-	key, _ := NewMasterKey(seed)
+	key, _ := NewMasterKey(seed, &BTCMainNetParams)
 	fmt.Println(key.B58Serialize())
 	childKey, _ := key.DerivePath("m/44'/0'/0'/0/0")
 	address, _ := childKey.Address()
@@ -197,9 +199,10 @@ func TestVector3_2(t *testing.T) {
 }
 
 func TestNeute(t *testing.T) {
+	t.SkipNow()
 	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
 	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
-	masterKey, _ := NewMasterKey(seed)
+	masterKey, _ := NewMasterKey(seed, &BTCMainNetParams)
 	masterPubKey := masterKey.Neuter()
 	fmt.Println("masterKey:", masterKey.B58Serialize())
 	// Normal N(CKDpriv((k,c),i))
@@ -224,7 +227,7 @@ func TestNeute(t *testing.T) {
 	fmt.Println("CCKey", childKey2ChildKey.B58Serialize())
 	privKey, _ := childKey2ChildKey.ECPrivKey()
 	fmt.Printf("PubKey:%x\n", privKey.PublicKey.SerializeCompressed())
-	wif := wif.NewWIF(privKey)
+	wif := wif.NewWIF(privKey, BTCMainNetParams.PrivateKeyID)
 	fmt.Println("WIF", wif.EncodeCompressed())
 	address, _ := childKey2ChildKey.Address()
 	fmt.Println("Address", address.EncodeAddress())

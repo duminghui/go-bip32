@@ -8,14 +8,14 @@ import (
 )
 
 type WIF struct {
-	PrivKey *ec.PrivateKey
+	privKey *ec.PrivateKey
+	version byte
 }
 
-const version = 0x80
-
-func NewWIF(privKey *ec.PrivateKey) *WIF {
+func NewWIF(privKey *ec.PrivateKey, version byte) *WIF {
 	return &WIF{
-		PrivKey: privKey,
+		privKey: privKey,
+		version: version,
 	}
 }
 
@@ -35,8 +35,8 @@ func (wif *WIF) encode(compressPubKey bool) string {
 		encodeLen++
 	}
 	b := make([]byte, 0, encodeLen)
-	b = append(b, version)
-	b = append(b, wif.PrivKey.Serialize()...)
+	b = append(b, wif.version)
+	b = append(b, wif.privKey.Serialize()...)
 	if compressPubKey {
 		b = append(b, 0x01)
 	}
