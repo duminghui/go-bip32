@@ -65,7 +65,7 @@ var (
 
 // ExtendedKey private/public key data
 type ExtendedKey struct {
-	coinParams     *Params
+	coinParams     *ChainParams
 	version        []byte // 4 bytes
 	depth          byte   // 1 byte
 	parentFP       []byte // 4 bytes
@@ -78,7 +78,7 @@ type ExtendedKey struct {
 }
 
 //NewMasterKey create a new master key data from seed
-func NewMasterKey(seed []byte, params *Params) (*ExtendedKey, error) {
+func NewMasterKey(seed []byte, params *ChainParams) (*ExtendedKey, error) {
 	if len(seed) < minSeedBytes || len(seed) > maxSeedBytes {
 		return nil, ErrInvalidSeedLen
 	}

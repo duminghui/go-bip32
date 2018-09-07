@@ -1,7 +1,7 @@
 // Package go-bip32 provides ...
 package bip32
 
-type Params struct {
+type ChainParams struct {
 	PubKeyHashAddrID byte
 	PrivateKeyID     byte
 	HDPrivateKeyID   [4]byte
@@ -9,7 +9,7 @@ type Params struct {
 	HDCoinType       uint32
 }
 
-var BTCMainNetParams = Params{
+var BTCMainNetParams = ChainParams{
 	PubKeyHashAddrID: 0x00,                            // 1
 	PrivateKeyID:     0x80,                            // 5(uncompressed) or K (compressed)
 	HDPrivateKeyID:   [4]byte{0x04, 0x88, 0xad, 0xe4}, //xprv
