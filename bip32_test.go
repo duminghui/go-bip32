@@ -199,7 +199,7 @@ func TestVector3_2(t *testing.T) {
 }
 
 func TestNeute(t *testing.T) {
-	t.SkipNow()
+	// t.SkipNow()
 	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
 	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
 	masterKey, _ := NewMasterKey(seed, &BTCMainNetParams)
@@ -226,7 +226,8 @@ func TestNeute(t *testing.T) {
 	fmt.Println(childKey2ChildKey.DerivationPath)
 	fmt.Println("CCKey", childKey2ChildKey.B58Serialize())
 	privKey, _ := childKey2ChildKey.ECPrivKey()
-	fmt.Printf("PubKey:%x\n", privKey.PublicKey.SerializeCompressed())
+	fmt.Println("PubkKey", privKey.PubKey.SerializeCompressed())
+	fmt.Printf("PubKey:%x\n", privKey.PubKey.SerializeCompressed())
 	wif := wif.NewWIF(privKey, BTCMainNetParams.PrivateKeyID)
 	fmt.Println("WIF", wif.EncodeCompressed())
 	address, _ := childKey2ChildKey.Address()
