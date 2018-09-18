@@ -199,7 +199,7 @@ func TestVector3_2(t *testing.T) {
 }
 
 func TestNeute(t *testing.T) {
-	// t.SkipNow()
+	t.SkipNow()
 	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
 	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
 	masterKey, _ := NewMasterKey(seed, &BTCMainNetParams)
@@ -232,4 +232,23 @@ func TestNeute(t *testing.T) {
 	fmt.Println("WIF", wif.EncodeCompressed())
 	address, _ := childKey2ChildKey.Address()
 	fmt.Println("Address", address.EncodeAddress())
+}
+
+func TestNeute2(t *testing.T) {
+	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
+	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
+	masterKey, _ := NewMasterKey(seed, &BTCMainNetParams)
+	fmt.Printf("%x\n", masterKey.key)
+	priKey, _ := masterKey.ECPrivKey()
+	fmt.Printf("%x\n", priKey.Serialize())
+	masterAddress, _ := masterKey.Address()
+	fmt.Println("masterAddress", masterAddress.EncodeAddress())
+	masterPubKey := masterKey.Neuter()
+	masterPubKeyAddress, _ := masterPubKey.Address()
+	fmt.Println("masterPubKeyAddress", masterPubKeyAddress.EncodeAddress())
+	// child1PubkKey, err := masterPubKey.HardenedChild(0) // error
+	child1PubKey, _ := masterPubKey.Child(0)
+	child1Address, _ := child1PubKey.Address()
+	fmt.Println("child1 Address", child1Address.EncodeAddress())
+	fmt.Printf("%x\n", child1PubKey.pubKeyBytes())
 }
