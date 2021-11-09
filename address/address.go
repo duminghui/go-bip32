@@ -4,7 +4,7 @@ package address
 import (
 	"errors"
 
-	"github.com/duminghui/go-bip32/utils/base58"
+	"go-bip32/utils/base58"
 	"golang.org/x/crypto/ripemd160"
 )
 

@@ -1,8 +1,11 @@
 // Package utils provides ...
 package hash
 
-import "crypto/sha256"
-import "golang.org/x/crypto/ripemd160"
+import (
+	"crypto/sha256"
+
+	"golang.org/x/crypto/ripemd160"
+)
 
 // Hash256 sha256(b)
 func Hash256(bytes []byte) []byte {

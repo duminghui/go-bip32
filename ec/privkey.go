@@ -1,8 +1,11 @@
 // Package ec provides ...
 package ec
 
-import "github.com/duminghui/go-bip32/utils/bytes"
-import "math/big"
+import (
+	"math/big"
+
+	"go-bip32/utils/bytes"
+)
 
 const PrivKeyBytesLen = 32
 

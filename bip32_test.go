@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/duminghui/go-bip32/utils/bytes"
-	"github.com/duminghui/go-bip32/wif"
 	"github.com/duminghui/go-bip39"
+	"go-bip32/utils/bytes"
+	"go-bip32/wif"
 )
 
 func TestNewMasterKey(t *testing.T) {

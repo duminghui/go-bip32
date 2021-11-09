@@ -2,9 +2,9 @@
 package wif
 
 import (
-	"github.com/duminghui/go-bip32/ec"
-	"github.com/duminghui/go-bip32/utils/base58"
-	"github.com/duminghui/go-bip32/utils/hash"
+	"go-bip32/ec"
+	"go-bip32/utils/base58"
+	"go-bip32/utils/hash"
 )
 
 type WIF struct {

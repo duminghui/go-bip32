@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/duminghui/go-bip32/utils/bytes"
+	"go-bip32/utils/bytes"
 )
 
 const (

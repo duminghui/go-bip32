@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/duminghui/go-bip32/address"
-	"github.com/duminghui/go-bip32/ec"
-	"github.com/duminghui/go-bip32/utils/base58"
-	"github.com/duminghui/go-bip32/utils/bytes"
-	"github.com/duminghui/go-bip32/utils/hash"
+	"go-bip32/address"
+	"go-bip32/ec"
+	"go-bip32/utils/base58"
+	"go-bip32/utils/bytes"
+	"go-bip32/utils/hash"
 )
 
 // https://github.com/btcsuite/btcutil/blob/master/hdkeychain/extendedkey.go
