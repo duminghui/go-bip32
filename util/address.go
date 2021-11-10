@@ -4,8 +4,8 @@ package util
 import (
 	"errors"
 
-	"go-bip32/d/chaincfg"
-	"go-bip32/util/base58"
+	"github.com/duminghui/go-bip32/d/chaincfg"
+	"github.com/duminghui/go-bip32/util/base58"
 	"golang.org/x/crypto/ripemd160"
 )
 

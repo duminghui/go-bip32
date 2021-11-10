@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"go-bip32/d/chaincfg"
-	"go-bip32/d/chaincfg/chainhash"
-	"go-bip32/ec"
-	"go-bip32/util"
-	"go-bip32/util/base58"
+	"github.com/duminghui/go-bip32/d/chaincfg"
+	"github.com/duminghui/go-bip32/d/chaincfg/chainhash"
+	"github.com/duminghui/go-bip32/ec"
+	"github.com/duminghui/go-bip32/util"
+	"github.com/duminghui/go-bip32/util/base58"
 )
 
 // References:

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/duminghui/go-bip32/d/chaincfg"
+	"github.com/duminghui/go-bip32/util"
+	"github.com/duminghui/go-bip32/util/bytes"
 	"github.com/duminghui/go-bip39"
-	"go-bip32/d/chaincfg"
-	"go-bip32/util"
-	"go-bip32/util/bytes"
 )
 
 func TestNewMasterKey(t *testing.T) {

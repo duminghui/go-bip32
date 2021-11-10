@@ -3,10 +3,10 @@ package util
 import (
 	"errors"
 
-	"go-bip32/d/chaincfg"
-	"go-bip32/d/chaincfg/chainhash"
-	"go-bip32/ec"
-	"go-bip32/util/base58"
+	"github.com/duminghui/go-bip32/d/chaincfg"
+	"github.com/duminghui/go-bip32/d/chaincfg/chainhash"
+	"github.com/duminghui/go-bip32/ec"
+	"github.com/duminghui/go-bip32/util/base58"
 )
 
 // ErrMalformedPrivateKey describes an error where a WIF-encoded private

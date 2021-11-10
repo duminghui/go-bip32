@@ -1,4 +1,4 @@
-module go-bip32
+module github.com/duminghui/go-bip32
 
 go 1.17
 
