@@ -1,5 +1,3 @@
-github.com/duminghui/go-bip32 v0.0.0-20180918071642-948b9927c9c3 h1:sRKwe/YmgbXPsDh8n1eRT5Gkq+3dn8RnqeU181aPyXI=
-github.com/duminghui/go-bip32 v0.0.0-20180918071642-948b9927c9c3/go.mod h1:jymvAkuOrqD9NuFIt8gvyp5asHcbRaQFZP6G54dDIqI=
 github.com/duminghui/go-bip39 v0.0.0-20180930142813-ea66018dedac h1:qRg0H+eUTNkwuBzyW0N5QaDmP8jHtHmilW+sS6pQwt8=
 github.com/duminghui/go-bip39 v0.0.0-20180930142813-ea66018dedac/go.mod h1:L4ZPTmvqQp+2Nf8EuU6m0CTVlQxTvgCP0LDbINBjLsM=
 golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa h1:idItI2DDfCokpg0N51B2VtiLdJ4vAuXC9fnCb2gACo4=

@@ -6,11 +6,6 @@ import (
 	"math/big"
 )
 
-// PaddedAppend append src to dst, if less than size padding 0 at start
-func PaddedAppend(dst []byte, srcPaddedSize int, src []byte) []byte {
-	return append(dst, PaddedBytes(srcPaddedSize, src)...)
-}
-
 // PaddedBytes padding byte array to size length
 func PaddedBytes(size int, src []byte) []byte {
 	offset := size - len(src)
