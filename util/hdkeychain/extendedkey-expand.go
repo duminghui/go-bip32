@@ -22,7 +22,7 @@ func (k *ExtendedKey) DerivePath(pathStr string) (*ExtendedKey, error) {
 		return keyTmp, nil
 	}
 	path := strings.Split(pathStr, "/")
-	err := vaildPath(path)
+	err := validPath(path)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (k *ExtendedKey) DerivePath(pathStr string) (*ExtendedKey, error) {
 	return keyTmp, nil
 }
 
-func vaildPath(path []string) error {
+func validPath(path []string) error {
 	if path[0] != "m" {
 		return ErrKeyPathFormat
 	}
