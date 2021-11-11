@@ -1,59 +1,13 @@
 package hdkeychain
 
 import (
+	"errors"
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/duminghui/go-bip32/d/chaincfg"
-	"github.com/duminghui/go-bip32/util"
-	"github.com/duminghui/go-bip32/util/bytes"
-	"github.com/duminghui/go-bip39"
 )
-
-func TestNewMasterKey(t *testing.T) {
-	entropy, err := bip39.NewEntropy(128)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("entropy:%x\n", entropy)
-	mnemonic, err := bip39.NewMnemonic(entropy)
-	mnemonic = "lemon speak wish predict athlete fringe ritual bonus ensure clay school goat"
-	fmt.Printf("mnemonic:%s\n", mnemonic)
-	seed, err := bip39.NewSeedWithValidMnemonic(mnemonic, "")
-	fmt.Printf("seed:%x, len:%d\n", seed, len(seed))
-	// seedNum, _ := new(big.Int).SetString("000102030405060708090a0b0c0d0e0f", 16)
-	// seed = seedNum.Bytes()
-	// seed = bytes.PaddedBytes(16, seed)
-	// fmt.Printf("seed2: %x\n", seed)
-	mstKey, err := NewMaster(seed, &chaincfg.MainNetParams)
-	if err != nil {
-		fmt.Println("NewMaster", err, len(seed))
-	}
-	fmt.Printf("MK version:%x\n", mstKey.version)
-	fmt.Printf("MK childNum:%x\n", mstKey.childNum)
-	fmt.Printf("MK key:%x\n", mstKey.key)
-	fmt.Printf("MK chainCode:%x\n", mstKey.chainCode)
-	fmt.Printf("MK fingerprint:%x\n", mstKey.parentFP)
-	fmt.Printf("MK depth:%x\n", mstKey.depth)
-	fmt.Printf("MK isPrivate:%v\n", mstKey.isPrivate)
-	b58 := mstKey.String()
-	fmt.Println("MK b58:", b58)
-	b58Vaild := "xprv9s21ZrQH143K3dRqV7LTj7uFvjMFiai3HV7Ytoj7Jg3mEArCCk2ujozgMSoip9FTWH4YwjTnjayPooxVesrtHst8qo8xZCnG1MazdLfBJBR"
-	fmt.Println(b58 == b58Vaild)
-	masterPubKey, err := mstKey.Neuter()
-	if err != nil {
-		fmt.Println("mstKey.Neuter():", err)
-	}
-	b58pubKey := masterPubKey.String()
-	fmt.Println("masterPubKey:", b58pubKey)
-	b58pubValid := "xpub661MyMwAqRbcG7WJb8sU6FqzUmBk83Rtei39hC8is1ak6yBLkHMAHcKACgmyxr6KLGhLSM4Qr74R8meHNcttv4bmPMDC8EwB9vJ3HRGaC53"
-	fmt.Println(b58pubKey == b58pubValid)
-	mstKeyStr := fmt.Sprintf("%x", mstKey.key)
-	fmt.Println(len(mstKeyStr))
-	fmt.Println(len("1e99423a4ed27608a15a2616a2b0e9e52ced330ac530edcc32c8ffc6a526aedd"))
-	fmt.Println(mstKeyStr)
-	fmt.Println(fmt.Sprintf("%x", mstKey.pubKeyBytes()))
-}
 
 type testVector struct {
 	seed       string
@@ -66,8 +20,31 @@ type chain struct {
 	prv  string
 }
 
+// PaddedBytes padding byte array to size length
+func PaddedBytes(size int, src []byte) []byte {
+	offset := size - len(src)
+	tmp := src
+	if offset > 0 {
+		tmp = make([]byte, size)
+		copy(tmp[offset:], src)
+	}
+	return tmp
+}
+
+// BytesFromHexStrFixZeroPrefix return fix Zero start strings
+// like 00010203040506
+func BytesFromHexStrFixZeroPrefix(str string) ([]byte, error) {
+	strNum, ok := new(big.Int).SetString(str, 16)
+	if !ok {
+		return nil, errors.New("string error")
+	}
+	bytes := strNum.Bytes()
+	bytes = PaddedBytes(len(str)/2, bytes)
+	return bytes, nil
+}
+
 func testVectorMethod(testVector *testVector) {
-	seed, _ := bytes.BytesFromHexStrFixZeroPrefix(testVector.seed)
+	seed, _ := BytesFromHexStrFixZeroPrefix(testVector.seed)
 	fmt.Printf("seed: %x\n", seed)
 	mstKey, err := NewMaster(seed, &chaincfg.MainNetParams)
 	if err != nil {
@@ -205,77 +182,4 @@ var testVector3 = &testVector{
 func TestVector3(t *testing.T) {
 	fmt.Println("=========================Vector3========================")
 	testVectorMethod(testVector3)
-}
-
-// https://github.com/iancoleman/bip39/issues/58
-// 17rxURoF96VhmkcEGCj5LNQkmN9HVhWb7F
-func TestVector3_2(t *testing.T) {
-	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
-	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
-	key, _ := NewMaster(seed, &chaincfg.MainNetParams)
-	fmt.Println(key.String())
-	childKey, _ := key.DerivePath("m/44'/0'/0'/0/0")
-	address, _ := childKey.Address(&chaincfg.MainNetParams)
-	fmt.Println(address.EncodeAddress())
-	fmt.Printf("%x\n", childKey.pubKeyBytes())
-}
-
-func TestNeuter(t *testing.T) {
-	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
-	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
-	mstKey, _ := NewMaster(seed, &chaincfg.MainNetParams)
-	masterPubKey, _ := mstKey.Neuter()
-	fmt.Println("mstKey:", mstKey.String())
-	// Normal N(CKDpriv((k,c),i))
-
-	child1Key, _ := mstKey.Derive(0)
-	fmt.Println("childKey1:   ", child1Key.String())
-	child1PubKey, _ := child1Key.Neuter()
-	fmt.Println("childPubKey1:", child1PubKey.String())
-	// Noremal CKDpub(N(k,c),i)
-	child1PubKey, _ = masterPubKey.Derive(0)
-	fmt.Println("childKey1:   ", child1PubKey.String())
-	child1PubKey2, _ := child1PubKey.Neuter()
-	fmt.Println("childPubKey1:", child1PubKey2.String())
-
-	// hardened N(CKDpriv((k,c),i))
-	child2Key, _ := mstKey.Derive(HardenedKeyStart)
-	fmt.Println("childKey2:   ", child2Key.String())
-	child2PubKey, _ := child2Key.Neuter()
-	fmt.Println("childPubKey2:", child2PubKey.String())
-	// hardened CKDpub(N(k,c),i)
-
-	_, err := masterPubKey.Derive(HardenedKeyStart)
-	fmt.Println("childPubKey2:", err)
-	fmt.Println("-----------------------------------")
-	childKey2ChildKey, _ := child2Key.Derive(0)
-	fmt.Println(childKey2ChildKey.Depth())
-	fmt.Println("CCKey", childKey2ChildKey.String())
-	privKey, _ := childKey2ChildKey.ECPrivKey()
-	fmt.Println("PubkKey", privKey.PubKey().SerializeCompressed())
-	fmt.Printf("PubKey:%x\n", privKey.PubKey().SerializeCompressed())
-
-	wif, err := util.NewWIF(privKey, &chaincfg.MainNetParams, true)
-	fmt.Println("WIF", wif.String())
-	address, _ := childKey2ChildKey.Address(&chaincfg.MainNetParams)
-	fmt.Println("Address", address.EncodeAddress())
-}
-
-func TestNeuter2(t *testing.T) {
-	mnemnic := "fruit wave dwarf banana earth journey tattoo true farm silk olive fence"
-	seed, _ := bip39.NewSeedWithValidMnemonic(mnemnic, "banana")
-	mstKey, _ := NewMaster(seed, &chaincfg.MainNetParams)
-	fmt.Printf("%x\n", mstKey.key)
-	priKey, _ := mstKey.ECPrivKey()
-	fmt.Printf("%x\n", priKey.Serialize())
-	masterAddress, _ := mstKey.Address(&chaincfg.MainNetParams)
-	fmt.Println("masterAddress", masterAddress.EncodeAddress())
-	masterPubKey, _ := mstKey.Neuter()
-	masterPubKeyAddress, _ := masterPubKey.Address(&chaincfg.MainNetParams)
-	fmt.Println("masterPubKeyAddress", masterPubKeyAddress.EncodeAddress())
-	// child1PubkKey, err := masterPubKey.HardenedChild(0) // error
-	child1PubKey, _ := masterPubKey.Derive(0)
-	child1Address, _ := child1PubKey.Address(&chaincfg.MainNetParams)
-	fmt.Println("child1 Address", child1Address.EncodeAddress())
-	fmt.Printf("%x\n", child1PubKey.pubKeyBytes())
 }
